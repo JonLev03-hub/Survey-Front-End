@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+/*global chrome*/
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
 const AppContainer = styled.div`
@@ -45,7 +46,29 @@ const Popup = styled.div`
 function App() {
   const [showPopup, setShowPopup] = useState(false);
 
+  const scrapeTitle = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0];
+      chrome.scripting.executeScript({
+        target: { tabId: activeTab.id },
+        function: () => {
+          const title = document.title;
+          chrome.runtime.sendMessage({ type: "title", data: title });
+        },
+      });
+    });
+  };
+
+  useEffect(() => {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.type === "title") {
+        console.log(message.data);
+      }
+    });
+  }, []);
+
   const handleSaveQuizClick = () => {
+    scrapeTitle();
     setShowPopup(true);
   };
 
