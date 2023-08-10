@@ -45,6 +45,7 @@ const Popup = styled.div`
 
 function App() {
   const [showPopup, setShowPopup] = useState(false);
+  const [popupTxt, setpopupTxt] = useState("Added Quiz");
 
   const scrapeTitle = () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -52,8 +53,25 @@ function App() {
       chrome.scripting.executeScript({
         target: { tabId: activeTab.id },
         function: () => {
-          const title = document.title;
-          chrome.runtime.sendMessage({ type: "title", data: title });
+          let results = [];
+          // injected code goes here
+          const title = document.getElementById("quiz_title");
+          const questions = document.getElementsByClassName("text");
+          for (let i = 0; i < questions.length; i++) {
+            let text = questions[i].querySelector(".question_text").textContent;
+
+            let answers = questions[i].querySelectorAll(".answer_text");
+            let answersText = [];
+            for (let j = 0; j < answers.length; j++) {
+              answersText.push(answers[j].textContent.trim());
+            }
+            results.push({ text: text, answers: answersText });
+          }
+          chrome.runtime.sendMessage({
+            type: "questions",
+            title: title,
+            data: results,
+          });
         },
       });
     });
@@ -61,9 +79,8 @@ function App() {
 
   useEffect(() => {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.type === "title") {
-        console.log(message.data);
-      }
+      if (message.type !== "questions") return;
+      console.log(message.data);
     });
   }, []);
 
@@ -87,7 +104,7 @@ function App() {
       </AppHeader>
       {showPopup && (
         <Popup>
-          <p>Quiz Saved!</p>
+          <p>{popupTxt}</p>
           <Button onClick={handleClosePopup}>Close</Button>
         </Popup>
       )}

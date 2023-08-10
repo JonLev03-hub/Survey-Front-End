@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name":"name",
-  "description": "desc",
+  "name":"canvas cracker extension",
+  "description": "Make studying easier",
   "version": "0.0.1",
   "action": {
     "default_popup": "index.html",
